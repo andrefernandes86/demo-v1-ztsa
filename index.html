@@ -14,6 +14,16 @@ font-family: Tahoma, Verdana, Arial, sans-serif; }
 
 <p> Your Public IP Address is: <? echo $_SERVER["REMOTE_ADDR"]; ?> </p>
 <p> Your Public IP Address is: <? echo $_SERVER["LOCAL_ADDR"]; ?> </p>
+  
+<h1>Your Ip Address : <span class="ip"></span></h1>
+ 
+<script type="text/javascript">
+    $(document).ready(function() {
+      $.getJSON("<a class="vglnk" href="https://api.ipify.org/?format=json" rel="nofollow"><span>https</span><span>://</span><span>api</span><span>.</span><span>ipify</span><span>.</span><span>org</span><span>/?</span><span>format</span><span>=</span><span>json</span></a>", function(e) {
+        $('.ip').text(e.ip);
+      });
+    });
+</script>
 
 
 <p><em>Thank you for using nginx.</em></p>
