@@ -1,23 +1,19 @@
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html>
 <head>
-<title>Welcome to the Trend Micro Vision One - Zero Trust Secure Access Demo!</title>
-<p>If you see this page, that means that you were able to remotely access this private application using the ZTNA Connector .</p>
-
-<script type="text/javascript">
-    window.onload = function () {
-        var script = document.createElement("script");
-        script.type = "text/javascript";
-        script.src = "http://jsonip.appspot.com/?callback=DisplayIP";
-        document.getElementsByTagName("head")[0].appendChild(script);
-    };
-    function DisplayIP(response) {
-        document.getElementById("ipaddress").innerHTML = "Your IP Address is " + response.ip;
-    }
-</script>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
 </head>
 <body>
-    <form>
-        <span id = "ipaddress"></span>
-    </form>
+<h1>Welcome to the Trend Micro Vision One - Zero Trust Secure Access Demo!</h1>
+<p>If you see this page, that means that you were able to remotely access this private application using the ZTNA Connector.</p>
+
+<p>The hostname of this server is: $(hostname)</p>
+
+<p><em>Thank you for using Trend Micro Vision One.</em></p>
 </body>
 </html>
