@@ -35,7 +35,6 @@ DisplayMenu
 #OPTION3
 Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/10.0.3.20.rdp' -OutFile c:\users\administrator\desktop\10.0.3.20.rdp
 Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/bookmarks.html' -OutFile c:\users\administrator\desktop\bookmarks.html
-Break
 }
 4 {
 #OPTION4
