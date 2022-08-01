@@ -1,5 +1,5 @@
 $Username = "trendmicro"
-$Password = "trendztsa!"
+$Password = "Trend@ztsa1!"
 
 $group = "Administrators"
 
