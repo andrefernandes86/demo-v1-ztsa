@@ -44,7 +44,9 @@ Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-zt
 4 {
 #OPTION4
 New-Item -Path c:\users\administrator\desktop -Name "networkshare.ps1" -ItemType "file" -Value "net use T: \\10.0.3.20\ztsa /u:trendmicro Trend@ztsa1!"
-Invoke-Expression c:\users\administrator\desktop\networkshare.ps1
+New-Item -Path c:\users\trendmicro\desktop -Name "networkshare.ps1" -ItemType "file" -Value "net use T: \\10.0.3.20\ztsa /u:trendmicro Trend@ztsa1!"
+New-Item -Path c:\users\default\desktop -Name "networkshare.ps1" -ItemType "file" -Value "net use T: \\10.0.3.20\ztsa /u:trendmicro Trend@ztsa1!"
+Invoke-Expression c:\users\trendmicro\desktop\networkshare.ps1
 Start-Sleep -Seconds 2
 DisplayMenu
 }
