@@ -1,0 +1,491 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: 
+  This CloudFormation Template will help you creating an Demo Environment consisting on two VPCs and four Instances (2 Windows, 2 Linux and the ZTNA).
+  The VPC1_LinuxVM will host some web applications. The VPC1_WindowsVM will host some web applications and a file share. the VPC1_ZTNA is the ZT Connetor (used to allow remote users to access the private network). The VPC2_WindowsVM is the client VM used to demonstrate ZTSA.
+  This CFT will deploy the XDR+ZTSA Modules to protect and monitor the VPC2_WindowsVM. The only additional step that has to be done is to Enable the XDR agent and the ZTSA module using the VisionOne Portal.
+
+#### Parameters ####
+Parameters:
+  PlatformURL:
+    Description: Please provide the VisionOne - Agent Installer URL.
+    Type: 'String'
+  KeyName:
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+    Description: EC2 Keypar to be used while creating the EC2 Instances used with this demo.
+    Type: AWS::EC2::KeyPair::KeyName
+  YourName:
+    Type: 'String'
+    Description: This information will be added to the instances names.
+  LatestWAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
+    Description: (Windows AMI ID) DO NOT CHANGE THIS VALUE  
+  LatestLAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/canonical/ubuntu/server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id'
+    Description: (Linux AMI ID) DO NOT CHANGE THIS VALUE  
+  ZTNAAmiID:
+    Description: Please type the AMI ID (ZTNA Image) - If using the TM AWS Account, select the us-west-1 region, and use the AMI ID ami-0f722a581cbf78785
+    Type: 'String'
+
+
+#### Deploying the Demo Resources ####
+Resources:
+
+
+  #### VPC 1 Components ####
+  ZTSAInternalSecurityGroupDemo: 
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+  ZTSAInternalSecurityGroupDemoSubnet:
+    Type: AWS::EC2::Subnet
+    DependsOn: ZTSAInternalSecurityGroupDemo
+    Properties:
+      VpcId: !Ref ZTSAInternalSecurityGroupDemo
+      CidrBlock: 10.0.3.0/24
+  ZTSAInternalSecurityGroupNATEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: ZTSAInternalSecurityGroupDemo
+    Properties:
+      Domain: ZTSAInternalSecurityGroupDemo
+  ZTSAInternalSecurityGroupDemoNATGateway:
+   Type: AWS::EC2::NatGateway
+   DependsOn: 
+   - ZTSAInternalSecurityGroupNATEIP
+   - ZTSAInternalSecurityGroupDemoSubnet
+   Properties:
+     AllocationId: !GetAtt ZTSAInternalSecurityGroupNATEIP.AllocationId
+     SubnetId: !Ref ZTSAInternalSecurityGroupDemoSubnet
+  ZTSAInternalSecurityGroupDemoInternetGateway:
+    Type: AWS::EC2::InternetGateway
+  ZTSAInternalSecurityGroupDemoRouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn: ZTSAInternalSecurityGroupDemoInternetGateway
+    Properties:
+      VpcId: !Ref ZTSAInternalSecurityGroupDemo
+  ZTSAInternalSecurityGroupDemoAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn: ZTSAInternalSecurityGroupDemoInternetGateway
+    Properties:
+      VpcId: !Ref ZTSAInternalSecurityGroupDemo
+      InternetGatewayId: !Ref ZTSAInternalSecurityGroupDemoInternetGateway
+  ZTSAInternalSecurityGroupDemoRoute:
+    Type: AWS::EC2::Route
+    DependsOn: ZTSAInternalSecurityGroupDemoInternetGateway
+    Properties:
+      RouteTableId: !Ref ZTSAInternalSecurityGroupDemoRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref ZTSAInternalSecurityGroupDemoInternetGateway
+  ZTSAInternalSecurityGroupDemoSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref ZTSAInternalSecurityGroupDemoRouteTable
+      SubnetId: !Ref ZTSAInternalSecurityGroupDemoSubnet
+  ZTSAInternalSecurityGroupDemoExternalSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: ZTSAInternalSecurityGroupDemo
+    Properties:
+      GroupDescription: ZTSA
+      VpcId:
+        Ref: ZTSAInternalSecurityGroupDemo
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 3389
+        ToPort: 3389
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8080
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 445
+        ToPort: 445
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: icmp
+        FromPort: -1
+        ToPort: -1
+        CidrIp: 0.0.0.0/0
+  ZTSAInternalSecurityGroupDemoInternalSecurityGroup: 
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: ZTSAInternalSecurityGroupDemo
+    Properties:
+      GroupDescription: Allow internal traffic
+      VpcId:
+        Ref: ZTSAInternalSecurityGroupDemo
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 3389
+        ToPort: 3389
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8080
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 445
+        ToPort: 445
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: icmp
+        FromPort: -1
+        ToPort: -1
+        CidrIp: 0.0.0.0/0
+
+  LinuxServer:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.medium
+      KeyName: !Ref 'KeyName'
+      NetworkInterfaces:
+      - DeviceIndex: "0"
+        AssociatePublicIpAddress: "true"
+        DeleteOnTermination: "true"
+        SubnetId: !Ref ZTSAInternalSecurityGroupDemoSubnet
+        PrivateIpAddress: 10.0.3.10
+        GroupSet:
+        - !GetAtt ZTSAInternalSecurityGroupDemoExternalSecurityGroup.GroupId
+        - !GetAtt ZTSAInternalSecurityGroupDemoInternalSecurityGroup.GroupId
+      ImageId: !Ref 'LatestLAmiId'
+      Tags:
+      - Key: Name
+        Value: 
+            Fn::Join:
+            - "_"
+            - - VPC1_LinuxServer1
+              - !Ref YourName
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash
+            apt-get update -y
+            apt-get install docker.io -y
+            docker run --rm -p 80:80 containous/whoami
+
+  LinuxServer2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.medium
+      KeyName: !Ref 'KeyName'
+      NetworkInterfaces:
+      - DeviceIndex: "0"
+        AssociatePublicIpAddress: "true"
+        DeleteOnTermination: "true"
+        SubnetId: !Ref ZTSAInternalSecurityGroupDemoSubnet
+        PrivateIpAddress: 10.0.3.11
+        GroupSet:
+        - !GetAtt ZTSAInternalSecurityGroupDemoExternalSecurityGroup.GroupId
+        - !GetAtt ZTSAInternalSecurityGroupDemoInternalSecurityGroup.GroupId
+      ImageId: !Ref 'LatestLAmiId'
+      Tags:
+      - Key: Name
+        Value: 
+            Fn::Join:
+            - "_"
+            - - VPC1_LinuxServer2
+              - !Ref YourName
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash
+            apt-get update -y
+            apt-get install docker.io wget -y
+            docker run --rm -p 80:80 containous/whoami
+
+  WindowsClient1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.large
+      KeyName: !Ref 'KeyName'
+      NetworkInterfaces:
+      - DeviceIndex: "0"
+        AssociatePublicIpAddress: "true"
+        DeleteOnTermination: "true"
+        SubnetId: !Ref ZTSAInternalSecurityGroupDemoSubnet
+        PrivateIpAddress: 10.0.3.20
+        GroupSet:
+        - !GetAtt ZTSAInternalSecurityGroupDemoExternalSecurityGroup.GroupId
+        - !GetAtt ZTSAInternalSecurityGroupDemoInternalSecurityGroup.GroupId
+      ImageId: !Ref 'LatestWAmiId'
+      Tags:
+      - Key: Name
+        Value: 
+            Fn::Join:
+            - "_"
+            - - VPC1_WindowsServer
+              - !Ref YourName
+      UserData:
+        Fn::Base64:
+          !Sub |
+            <powershell>
+
+            # Disable Defender And Other Security Controls
+            Set-MpPreference -DisableRealtimeMonitoring $true -DisableScriptScanning $true -DisableBehaviorMonitoring $true -DisableIOAVProtection $true -DisableIntrusionPreventionSystem $true
+            Set-ExecutionPolicy Unrestricted -Force
+            Set-NetFirewallProfile -Profile Domain, Public, Private -Enabled False
+
+            # Google Chrome Installation
+            Invoke-WebRequest 'http://dl.google.com/chrome/install/375.126/chrome_installer.exe' -OutFile c:\chrome.exe
+            Invoke-Expression "c:\chrome.exe /silent /install"
+
+            # Create User
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/setUser.ps1' -Outfile c:\setUser.ps1
+            Invoke-Expression c:\setUser.ps1
+
+            # Add Tools
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start2.ps1' -Outfile c:\tools.ps1 
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start2.ps1' -Outfile c:\users\administrator\desktop\tools.ps1 
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start2.ps1' -Outfile c:\users\trendmicro\desktop\tools.ps1 
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start2.ps1' -Outfile c:\users\default\desktop\tools.ps1 
+
+
+            # Add SMB share
+            New-Item -Path "c:\" -Name "ztsa" -ItemType "directory"
+            New-Item -Path c:\ztsa -Name "confidential.txt" -ItemType "file" -Value "Congratulations! You can now access these files using the Trend Micro ZTSA"
+            New-Item -Path c:\ztsa -Name "eicar.com" -ItemType "file" -Value "X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+            New-Item -Path c:\ztsa -Name "surprise.ps1" -ItemType "file" -Value "Invoke-WebRequest -Uri https://github.com/limiteci/WannaCry/raw/main/WannaCry.EXE -OutFile c:\wcry.exe; Start-Process c:\wcry.exe"
+            New-SmbShare -Name "ztsa" -Path "c:\ztsa" -FullAccess "Everyone","Guests","Anonymous Logon"
+            Grant-SmbShareAccess -Name "ztsa" -AccountName "Everyone" -AccessRight Full -Force
+
+            </powershell>
+
+  ZTNA:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      #InstanceType: t2.large
+      InstanceType: m5.xlarge
+      KeyName: !Ref 'KeyName'
+      NetworkInterfaces:
+      - DeviceIndex: "0"
+        AssociatePublicIpAddress: "true"
+        DeleteOnTermination: "true"
+        SubnetId: !Ref ZTSAInternalSecurityGroupDemoSubnet
+        #PrivateIpAddress: 10.0.3.30
+        GroupSet:
+        - !GetAtt ZTSAInternalSecurityGroupDemoExternalSecurityGroup.GroupId
+        - !GetAtt ZTSAInternalSecurityGroupDemoInternalSecurityGroup.GroupId
+      ImageId: !Ref 'ZTNAAmiID'
+      Tags:
+      - Key: Name
+        Value: 
+            Fn::Join:
+            - "_"
+            - - VPC1_ZTNA
+              - !Ref YourName
+
+
+  #### VPC 2 Components ####
+  ZTSA2InternalSecurityGroupDemo: 
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+  ZTSA2InternalSecurityGroupDemoSubnet:
+    Type: AWS::EC2::Subnet
+    DependsOn: ZTSA2InternalSecurityGroupDemo
+    Properties:
+      VpcId: !Ref ZTSA2InternalSecurityGroupDemo
+      CidrBlock: 10.0.5.0/24
+  ZTSA2InternalSecurityGroupNATEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: ZTSA2InternalSecurityGroupDemo
+    Properties:
+      Domain: ZTSA2InternalSecurityGroupDemo
+  ZTSA2InternalSecurityGroupDemoNATGateway:
+   Type: AWS::EC2::NatGateway
+   DependsOn: 
+   - ZTSA2InternalSecurityGroupNATEIP
+   - ZTSA2InternalSecurityGroupDemoSubnet
+   Properties:
+     AllocationId: !GetAtt ZTSA2InternalSecurityGroupNATEIP.AllocationId
+     SubnetId: !Ref ZTSA2InternalSecurityGroupDemoSubnet
+  ZTSA2InternalSecurityGroupDemoInternetGateway:
+    Type: AWS::EC2::InternetGateway
+  ZTSA2InternalSecurityGroupDemoRouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn: ZTSA2InternalSecurityGroupDemoInternetGateway
+    Properties:
+      VpcId: !Ref ZTSA2InternalSecurityGroupDemo
+  ZTSA2InternalSecurityGroupDemoAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn: ZTSA2InternalSecurityGroupDemoInternetGateway
+    Properties:
+      VpcId: !Ref ZTSA2InternalSecurityGroupDemo
+      InternetGatewayId: !Ref ZTSA2InternalSecurityGroupDemoInternetGateway
+  ZTSA2InternalSecurityGroupDemoRoute:
+    Type: AWS::EC2::Route
+    DependsOn: ZTSA2InternalSecurityGroupDemoInternetGateway
+    Properties:
+      RouteTableId: !Ref ZTSA2InternalSecurityGroupDemoRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref ZTSA2InternalSecurityGroupDemoInternetGateway
+  ZTSA2InternalSecurityGroupDemoSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref ZTSA2InternalSecurityGroupDemoRouteTable
+      SubnetId: !Ref ZTSA2InternalSecurityGroupDemoSubnet
+  ZTSA2InternalSecurityGroupDemoExternalSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: ZTSA2InternalSecurityGroupDemo
+    Properties:
+      GroupDescription: ZTSA2
+      VpcId:
+        Ref: ZTSA2InternalSecurityGroupDemo
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 3389
+        ToPort: 3389
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8080
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 445
+        ToPort: 445
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: icmp
+        FromPort: -1
+        ToPort: -1
+        CidrIp: 0.0.0.0/0
+  ZTSA2InternalSecurityGroupDemoInternalSecurityGroup: 
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: ZTSA2InternalSecurityGroupDemo
+    Properties:
+      GroupDescription: Allow internal traffic
+      VpcId:
+        Ref: ZTSA2InternalSecurityGroupDemo
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 3389
+        ToPort: 3389
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8080
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 445
+        ToPort: 445
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: icmp
+        FromPort: -1
+        ToPort: -1
+        CidrIp: 0.0.0.0/0
+
+  WindowsClient2:
+    Type: 'AWS::EC2::Instance'
+    DependsOn: WindowsClient1
+    Properties:
+      InstanceType: t2.large
+      KeyName: !Ref 'KeyName'
+      NetworkInterfaces:
+      - DeviceIndex: "0"
+        AssociatePublicIpAddress: "true"
+        DeleteOnTermination: "true"
+        SubnetId: !Ref ZTSA2InternalSecurityGroupDemoSubnet
+        #PrivateIpAddress: 10.0.5.20
+        GroupSet:
+        - !GetAtt ZTSA2InternalSecurityGroupDemoExternalSecurityGroup.GroupId
+        - !GetAtt ZTSA2InternalSecurityGroupDemoInternalSecurityGroup.GroupId
+      ImageId: !Ref 'LatestWAmiId'
+      Tags:
+      - Key: Name
+        Value: 
+            Fn::Join:
+            - "_"
+            - - VPC2_WindowsClient
+              - !Ref YourName
+      UserData:
+        Fn::Base64:
+          !Sub |
+            <powershell>
+            # Vision One Endpoint Sensor Install
+            Invoke-WebRequest -Uri ${PlatformURL} -OutFile c:\basecamp.exe
+            Start-Process c:\basecamp.exe
+
+            # Disable Defender And Other Security Controls
+            Set-MpPreference -DisableRealtimeMonitoring $true -DisableScriptScanning $true -DisableBehaviorMonitoring $true -DisableIOAVProtection $true -DisableIntrusionPreventionSystem $true
+            Set-ExecutionPolicy Unrestricted -Force
+            Set-NetFirewallProfile -Profile Domain, Public, Private -Enabled False
+
+            # Google Chrome Installation
+            Invoke-WebRequest 'http://dl.google.com/chrome/install/375.126/chrome_installer.exe' -OutFile c:\chrome.exe
+            Invoke-Expression "c:\chrome.exe /silent /install"
+
+            # Map SMB share
+            New-Item -Path c:\users\administrator\desktop -Name "networkshare.ps1" -ItemType "file" -Value "net use T: \\10.0.3.20\ztsa /u:trendmicro Trend@ztsa1!"
+            New-Item -Path c:\users\trendmicro\desktop -Name "networkshare.ps1" -ItemType "file" -Value "net use T: \\10.0.3.20\ztsa /u:trendmicro Trend@ztsa1!"
+            New-Item -Path c:\users\default\desktop -Name "networkshare.ps1" -ItemType "file" -Value "net use T: \\10.0.3.20\ztsa /u:trendmicro Trend@ztsa1!"
+    
+            # Download extra files
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/10.0.3.20.rdp' -OutFile c:\users\administrator\desktop\10.0.3.20.rdp
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/10.0.3.20.rdp' -OutFile c:\users\trendmicro\desktop\10.0.3.20.rdp
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/10.0.3.20.rdp' -Outfile c:\users\default\desktop\10.0.3.20.rdp
+
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/bookmarks.html' -OutFile c:\users\administrator\desktop\bookmarks.html
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/bookmarks.html' -OutFile c:\users\trendmicro\desktop\bookmarks.html
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/bookmarks.html' -Outfile c:\users\default\desktop\bookmarks.html
+
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start.ps1' -Outfile c:\tools.ps1 
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start.ps1' -Outfile c:\users\administrator\desktop\tools.ps1 
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start.ps1' -Outfile c:\users\trendmicro\desktop\tools.ps1 
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start.ps1' -Outfile c:\users\default\desktop\tools.ps1 
+
+            # Create User
+            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/setUser.ps1' -Outfile c:\setUser.ps1
+            Invoke-Expression c:\setUser.ps1
+
+
+            </powershell>
+
+Outputs:
+  VPC1WindowServerIP:
+    Description: Use this IP address to access the Windows Server using RDP (Using the VPC2_WindowsClient or ZTSA Browser Access).
+    Value: !GetAtt WindowsClient1.PrivateIp
+  VPC1LinuxServer1IP:
+    Description: Use this IP address to access the Linux Client (Using the VPC2_WindowsClient or ZTSA Browser Access).
+    Value: !GetAtt LinuxServer.PrivateIp
+  VPC1LinuxServer2IP:
+    Description: Use this IP address to access the Linux Client (Using the VPC2_WindowsClient or ZTSA Browser Access).
+    Value: !GetAtt LinuxServer2.PrivateIp    
+  ZTNAIP:
+    Description: To activate the ZTNA, connect to the following Public IP Address using SSH (ssh -i <path_of_the_private_key_file> admin@<public_IP_address_of_the_instance>). After that, you have to change the default password (passwd - the default passowrd is saseztna). After changing the detault password, you can use the "enable" command, followed by "register tokenID". The token id can be generated using the VisionOne Portal.
+    Value: !GetAtt ZTNA.PublicIp
+  VPC2WindowClientIP:
+    Description: Use this IP address to access the Windows Server using RDP. 
+    Value: !GetAtt WindowsClient2.PublicIp
