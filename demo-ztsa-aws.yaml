@@ -281,8 +281,6 @@ Resources:
             Start-Sleep -Seconds 5
 
             # Create User
-            #Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/setUser.ps1' -Outfile c:\setUser.ps1
-            #Invoke-Expression c:\setUser.ps1
             $Username = "${WindowsUsername}"
             $Password = "${WindowsPassword}"
 
@@ -310,16 +308,6 @@ Resources:
             Write-Host "Ensuring password for $Username never expires."
             & WMIC USERACCOUNT WHERE "Name='$Username'" SET PasswordExpires=FALSE
             Start-Sleep -Seconds 5
-
-            # Add Tools
-            #Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start2.ps1' -Outfile c:\tools.ps1 
-            #Start-Sleep -Seconds 5            
-            #Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start2.ps1' -Outfile c:\users\administrator\desktop\tools.ps1 
-            #Start-Sleep -Seconds 5            
-            #Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start2.ps1' -Outfile c:\users\$Username\desktop\tools.ps1 
-            #Start-Sleep -Seconds 5            
-            #Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start2.ps1' -Outfile c:\users\default\desktop\tools.ps1 
-            #Start-Sleep -Seconds 5
 
             # Add SMB share
             New-Item -Path "c:\" -Name "ztsa" -ItemType "directory"
@@ -480,8 +468,6 @@ Resources:
             Start-Sleep -Seconds 5
 
             # Create User
-            #Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/setUser.ps1' -Outfile c:\setUser.ps1
-            #Invoke-Expression c:\setUser.ps1
             $Username = "${WindowsUsername}"
             $Password = "${WindowsPassword}"
 
@@ -526,31 +512,19 @@ Resources:
             Start-Sleep -Seconds 5
 
             # Map SMB share shortcut
-            New-Item -Path c:\users\administrator\desktop -Name "networkshare.ps1" -ItemType "file" -Value "net use T: \\10.0.3.20\ztsa /u:$Username $Password"
-            New-Item -Path c:\users\$Username\desktop -Name "networkshare.ps1" -ItemType "file" -Value "net use T: \\10.0.3.20\ztsa /u:$Username $Password"
             New-Item -Path c:\users\default\desktop -Name "networkshare.ps1" -ItemType "file" -Value "net use T: \\10.0.3.20\ztsa /u:$Username $Password"
             Start-Sleep -Seconds 5
     
             # Download extra files
-            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/10.0.3.20.rdp' -OutFile c:\users\administrator\desktop\10.0.3.20.rdp
-            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/10.0.3.20.rdp' -OutFile c:\users\$Username\desktop\10.0.3.20.rdp
             Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/10.0.3.20.rdp' -Outfile c:\users\default\desktop\10.0.3.20.rdp
-            Start-Sleep -Seconds 5
-
-            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/bookmarks.html' -OutFile c:\users\administrator\desktop\bookmarks.html
-            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/bookmarks.html' -OutFile c:\users\$Username\desktop\bookmarks.html
             Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/bookmarks.html' -Outfile c:\users\default\desktop\bookmarks.html
             Start-Sleep -Seconds 5
 
             Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start.ps1' -Outfile c:\tools.ps1 
-            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start.ps1' -Outfile c:\users\administrator\desktop\tools.ps1 
-            Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start.ps1' -Outfile c:\users\$Username\desktop\tools.ps1 
             Invoke-WebRequest 'https://raw.githubusercontent.com/andrefernandes86/demo-v1-ztsa/main/start.ps1' -Outfile c:\users\default\desktop\tools.ps1 
             Start-Sleep -Seconds 5
 
             Invoke-WebRequest 'https://github.com/andrefernandes86/demo-v1-ztsa/raw/main/SmbShare.lnk' -Outfile c:\smbShare.lnk 
-            Invoke-WebRequest 'https://github.com/andrefernandes86/demo-v1-ztsa/raw/main/SmbShare.lnk' -Outfile c:\users\administrator\desktop\smbShare.lnk 
-            Invoke-WebRequest 'https://github.com/andrefernandes86/demo-v1-ztsa/raw/main/SmbShare.lnk' -Outfile c:\users\$Username\desktop\smbShare.lnk 
             Invoke-WebRequest 'https://github.com/andrefernandes86/demo-v1-ztsa/raw/main/SmbShare.lnk' -Outfile c:\users\default\desktop\smbShare.lnk 
 
             </powershell>
