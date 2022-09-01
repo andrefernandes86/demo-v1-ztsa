@@ -294,7 +294,6 @@ Resources:
             New-Item -Path c:\ztsa -Name "eicar.com" -ItemType "file" -Value "X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
             New-SmbShare -Name "ztsa" -Path "c:\ztsa" -FullAccess "Everyone","Guests","Anonymous Logon"
             Grant-SmbShareAccess -Name "ztsa" -AccountName "Everyone" -AccessRight Full -Force
-            Invoke-WebRequest 'https://github.com/andrefernandes86/demo-v1-ztsa/raw/main/T1113.exe' -OutFile c:\ztsa\T1113.exe
             Invoke-WebRequest 'https://github.com/andrefernandes86/demo-v1-ztsa/raw/main/T1496.exe' -OutFile c:\ztsa\T1496.exe
             Invoke-WebRequest 'https://github.com/andrefernandes86/demo-v1-ztsa/raw/main/T1562-2.exe' -OutFile c:\ztsa\T1562-2.exe
             Invoke-WebRequest 'https://github.com/andrefernandes86/demo-v1-ztsa/raw/main/T1562.exe' -OutFile c:\ztsa\T1562.exe
