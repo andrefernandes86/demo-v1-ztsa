@@ -8,8 +8,8 @@ Write-Host @"
 |    1) Bypass ExecutionPolicy (T1562.001)               |
 |    2) Crypto (Monero) Mining (T1496)                   |
 |    3) Disable Windows Defender All (T1562.001).        | 
-|    4) Screen Capture (T1113).                          |
-|    5) Mimikatz.                                        |
+|    4) Mimikatz.                                        |
+|    5) Screen Capture (T1113).                          |
 |    6) EXIT                                             |
 +========================================================+
 
