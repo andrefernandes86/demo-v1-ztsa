@@ -26,56 +26,60 @@ Parameters:
   WindowsPassword:
     Description: AWS - Please enter password to be used when accessing the Windows Instances (8 characters including capital case, lower cases and special characters).
     Type: 'String'
+  RegistrationToken:
+    Type: String
+    MaxLength: 800
+    Description: VisionOne - Please provide the VisionOne / ZTSA Private Access / AWS Registration Token
 Mappings:
   RegionMap:
     us-east-2:
-      HVM64: ami-0cd5081cf4d8f8565
+      HVM64: ami-06e0ae314ae5151d0
     us-east-1:
-      HVM64: ami-0e2e436a2f984225c
+      HVM64: ami-08ff823a0926a300a
     us-west-1:
-      HVM64: ami-05b4ebc89b44bfad6
+      HVM64: ami-0423dc81158b3ce62
     us-west-2:
-      HVM64: ami-09efa7254809c33e9
+      HVM64: ami-0268e6ee6a8cdabc2
     af-south-1:
-      HVM64: ami-07cbb856e20c68720
+      HVM64: ami-07f2851f479e8eac3
     ap-east-1:
-      HVM64: ami-0af881c94d26921e5
+      HVM64: ami-0c7905dd61c2a2099
     ap-southeast-3:
-      HVM64: ami-0028e495c01acf27e
+      HVM64: ami-0f0161b8c64b5885a
     ap-south-1:
-      HVM64: ami-0ad761347af003240
+      HVM64: ami-049ba2464a243096f
     ap-northeast-3:
-      HVM64: ami-027866f48b762d903
+      HVM64: ami-0c58860724bad64c7
     ap-northeast-2:
-      HVM64: ami-03ea56394911bb314
+      HVM64: ami-024b75ddee0c23c5f
     ap-southeast-1:
-      HVM64: ami-08e3dd82ed251ecfe
+      HVM64: ami-0ef2de833d8129638
     ap-southeast-2:
-      HVM64: ami-005bb8ee9b0024e21
+      HVM64: ami-02dad2c5fb2d3c5bf
     ap-northeast-1:
-      HVM64: ami-0c5f3988a477fabc9
+      HVM64: ami-04ce47277313aabe1
     ca-central-1:
-      HVM64: ami-0bc2edf14fdb277b2
+      HVM64: ami-005c0b5cca6448bb0
     eu-central-1:
-      HVM64: ami-0a14a03924f9d5a4d
+      HVM64: ami-0b24a0f7886c301c5
     eu-west-1:
-      HVM64: ami-0e8eb56b103e0eb07
+      HVM64: ami-0b5ea499ffcbc4653
     eu-west-2:
-      HVM64: ami-0308c380c086a429e
+      HVM64: ami-04970cfb389f477e4
     eu-south-1:
-      HVM64: ami-02ecc78819407b98a
+      HVM64: ami-0356eba83e6deed94
     eu-west-3:
-      HVM64: ami-0f78c018003af9e37
+      HVM64: ami-040d8d8aa6a7f2994
     eu-north-1:
-      HVM64: ami-0b9266c432caf80e1
+      HVM64: ami-02d13424322de6aaf
     me-south-1:
-      HVM64: ami-0ce77297dd621b62d
+      HVM64: ami-0a33d226ea9b0d60c
     sa-east-1:
-      HVM64: ami-0ce49248a7ad60210
+      HVM64: ami-04f522c234f7054e6
     us-gov-west-1:
-      HVM64: ami-0c856d74e8b87e677
+      HVM64: ami-05fb30552c0ec5e85
     us-gov-east-1:
-      HVM64: ami-051e5112c921a3866
+      HVM64: ami-0be70f734a62262aa
 
 #### Deploying the Demo Resources ####
 Resources:
@@ -323,6 +327,12 @@ Resources:
             - "_"
             - - VPC1_ZTNA
               - !Ref YourName
+      UserData: !Base64
+        'Fn::Join':
+          - ''
+          - - |
+              tqu84LtQZAmZRzhraQP6ZR29m9GmInFo
+            - !Ref RegistrationToken
 
   #### VPC 2 - Base Infrastructure ####
   VPC2: 
