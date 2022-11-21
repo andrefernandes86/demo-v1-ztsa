@@ -26,7 +26,6 @@ Parameters:
     Type: 'String'
   WindowsPassword:
     Description: AWS - Please enter password to be used when accessing the Windows Instances (8 characters including capital case, lower cases and special characters).
-    Default: Trend@00p$
     Type: 'String'
   RegistrationToken:
     Type: String
@@ -271,6 +270,12 @@ Resources:
             secedit /configure /db c:\windows\security\local.sdb /cfg c:\secpol.cfg /areas SECURITYPOLICY
             rm -force c:\secpol.cfg -confirm:$false
 
+            # Disable Password Complexity
+            secedit /export /cfg c:\secpol.cfg
+            (gc C:\secpol.cfg).replace("PasswordComplexity = 1", "PasswordComplexity = 0") | Out-File C:\secpol.cfg
+            secedit /configure /db c:\windows\security\local.sdb /cfg c:\secpol.cfg /areas SECURITYPOLICY
+            rm -force c:\secpol.cfg -confirm:$false
+
             # Create User
             $Username = "${WindowsUsername}"
             $Password = "${WindowsPassword}"
@@ -315,7 +320,7 @@ Resources:
   ZTNA:
     Type: 'AWS::EC2::Instance'
     Properties:
-      InstanceType: m5.xlarge
+      InstanceType: c5.xlarge
       KeyName: !Ref 'KeyName'
       NetworkInterfaces:
       - DeviceIndex: "0"
